@@ -87,7 +87,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 12:59</b></span>
+    <span>本文件生成时间: <b>2026-10-23 13:06</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -128,6 +128,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
       </div>
       <div class="grid6">
         <div class="mcard"><div class="lab">份额较前一交易日</div><div class="val" id="c1"></div><div class="sub" id="c1s"></div></div>
+        <div class="mcard"><div class="lab">规模较前一交易日</div><div class="val" id="cS1"></div><div class="sub" id="cS1s"></div></div>
         <div class="mcard"><div class="lab">份额近 20 期</div><div class="val" id="c20"></div><div class="sub" id="c20s"></div></div>
         <div class="mcard"><div class="lab">份额近 60 期</div><div class="val" id="c60"></div><div class="sub" id="c60s"></div></div>
         <div class="mcard"><div class="lab">份额近 250 期</div><div class="val" id="c250"></div><div class="sub" id="c250s"></div></div>
@@ -219,9 +220,17 @@ function render() {
     const d = r.shares_wan - base.shares_wan;
     setCard(id, sid, signed(d) + '<small> 万份</small>', id === 'c1' ? base.date : '较 ' + base.date, d);
   }
+  // 规模较前一交易日（亿元）
+  if (pi > 0) {
+    const sNow = r.shares_wan * 1e4 * r.unit_nav / 1e8;
+    const sPrev = prev.shares_wan * 1e4 * prev.unit_nav / 1e8;
+    const dS = sNow - sPrev;
+    setCard('cS1', 'cS1s', signed(dS) + '<small> 亿元</small>', prev.date, dS);
+  } else {
+    setCard('cS1', 'cS1s', '—', '—', 0);
+  }
   const dAll = r.shares_wan / FIRST.shares_wan - 1;
-  setCard('cAll', 'cAlls', fmtPct(dAll * 100), FIRST.date + ' 起', dAll);
-  const dAcc = r.acc_nav / FIRST.acc_nav - 1;
+  setCard('cAll', 'cAlls', fmtPct(dAll * 100), FIRST.date + ' 起', dAll);  const dAcc = r.acc_nav / FIRST.acc_nav - 1;
   setCard('cAcc', 'cAccs', fmtPct(dAcc * 100), FIRST.date + ': ' + fmt4(FIRST.acc_nav), dAcc);
   drawCharts();
 }
