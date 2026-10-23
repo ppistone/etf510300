@@ -72,6 +72,9 @@ th,td{padding:7px 12px; text-align:right; border-bottom:1px solid #eef1f5;}
 th{position:sticky; top:0; background:#f3f6fa; color:#33475e; font-weight:700; z-index:1;}
 td:first-child,th:first-child{text-align:left;}
 tbody tr:hover{background:#f7f9fc;}
+th.sortable{cursor:pointer; user-select:none; white-space:nowrap;}
+th.sortable:hover{color:#2a62b4;}
+th.sortable span{font-size:11px; color:#2a62b4;}
 </style>
 </head>
 <body>
@@ -84,7 +87,7 @@ tbody tr:hover{background:#f7f9fc;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 11:57</b></span>
+    <span>本文件生成时间: <b>2026-10-23 12:50</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -151,11 +154,11 @@ tbody tr:hover{background:#f7f9fc;}
     <div class="chartCard">
       <div class="ctitle">明细数据表
         <span class="badge">共 <span id="tblCount"></span> 行</span>
-        <span style="font-weight:400;color:#8a97a6;font-size:12.5px;">（默认显示最近 300 行，可滚动）</span>
+        <span style="font-weight:400;color:#8a97a6;font-size:12.5px;">（点击「日期」可切换升/降序，默认显示最新 300 行，可滚动）</span>
       </div>
       <div class="tableScroll">
         <table><thead><tr>
-          <th>日期</th><th>总份额(万份)</th><th>单位净值(元)</th><th>累计净值(元)</th><th>基金规模(亿元)</th><th>较前一交易日(万份)</th>
+          <th class="sortable" onclick="toggleDateSort()" id="dateTh">日期 <span id="dateSortIcon">▼</span></th><th>总份额(万份)</th><th>单位净值(元)</th><th>累计净值(元)</th><th>基金规模(亿元)</th><th>较前一交易日(万份)</th>
         </tr></thead><tbody id="tblBody"></tbody></table>
       </div>
     </div>
@@ -318,12 +321,21 @@ document.getElementById('ptCount').textContent = ROWS.length;
 document.getElementById('loadedCount').textContent = ROWS.length;
 document.getElementById('tblCount').textContent = ROWS.length;
 
+let dateSortDir = 'desc';
+
 function buildTable() {
-  const start = Math.max(0, ROWS.length - 300);
+  const allIdx = ROWS.map((_, i) => i);
+  let idx;
+  if (dateSortDir === 'desc') {
+    idx = allIdx.slice(Math.max(0, ROWS.length - 300));  // 最新 300 行
+    idx.reverse();                                       // 最新在前
+  } else {
+    idx = allIdx.slice(0, 300);                          // 最早 300 行，最早在前
+  }
   let html = '';
-  for (let i = start; i < ROWS.length; i++) {
+  for (const i of idx) {
     const r = ROWS[i], prev = ROWS[Math.max(0, i - 1)];
-    const delta = i > 0 ? r.shares_wan - prev.shares_wan : 0;
+    const delta = i > 0 ? r.shares_wan - prev.shares_wan : 0;  // 始终取真实前一日
     const scale = (r.shares_wan * 1e4 * r.unit_nav / 1e8);
     const cls = delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat');
     html += `<tr><td>${r.date}</td><td>${fmt2(r.shares_wan)}</td><td>${fmt4(r.unit_nav)}</td>`
@@ -331,6 +343,12 @@ function buildTable() {
           + `<td class="${cls}">${signed(delta)}</td></tr>`;
   }
   document.getElementById('tblBody').innerHTML = html;
+}
+
+function toggleDateSort() {
+  dateSortDir = dateSortDir === 'desc' ? 'asc' : 'desc';
+  document.getElementById('dateSortIcon').textContent = dateSortDir === 'desc' ? '▼' : '▲';
+  buildTable();
 }
 
 function toggleTable() {
