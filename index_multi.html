@@ -49,6 +49,9 @@ th,td{padding:7px 12px; text-align:right; border-bottom:1px solid #eef1f5;}
 th{position:sticky; top:0; background:#f3f6fa; color:#33475e; font-weight:700; z-index:1;}
 td:first-child,th:first-child{text-align:left;}
 tbody tr:hover{background:#f7f9fc;}
+th.sortable{cursor:pointer; user-select:none; white-space:nowrap;}
+th.sortable:hover{color:#2a62b4;}
+th.sortable span{font-size:11px; color:#2a62b4;}
 .foot{color:#93a1b1; font-size:12px; margin-top:6px; line-height:1.9;}
 </style>
 </head>
@@ -62,7 +65,7 @@ tbody tr:hover{background:#f7f9fc;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（各基金 2840 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 11:57</b></span>
+    <span>本文件生成时间: <b>2026-10-23 12:50</b></span>
     <span class="auto">已启用每日自动更新（每晚 23:30）</span>
   </div>
 
@@ -94,6 +97,7 @@ tbody tr:hover{background:#f7f9fc;}
   <div class="chartCard">
     <div class="ctitle">明细数据表
       <span class="badge" style="background:#e3eefc;color:#2a62b4;font-size:11.5px;border-radius:10px;padding:2px 9px;">最近 300 行</span>
+      <span style="font-weight:400;color:#8a97a6;font-size:12.5px;">（点击「日期」可切换升/降序）</span>
     </div>
     <div class="tableScroll">
       <table><thead><tr id="tblHead"></tr></thead><tbody id="tblBody"></tbody></table>
@@ -210,19 +214,31 @@ function drawCharts() {
         {type:'line', data:{labels, datasets:absDS}, options:baseOpts()});
 }
 
+let dateSortDir = 'desc';
+
 function buildTable() {
   const head = document.getElementById('tblHead');
-  head.innerHTML = '<th>日期</th>' + FUNDS.map(f=>`<th>${f.code} 份额(亿份)</th>`).join('');
-  const start = Math.max(0, DATES.length - 300);
+  head.innerHTML = `<th class="sortable" onclick="toggleDateSort()" id="dateTh">日期 <span id="dateSortIcon">▼</span></th>` + FUNDS.map(f=>`<th>${f.code} 份额(亿份)</th>`).join('');
+  let idx;
+  if (dateSortDir === 'desc') {
+    idx = DATES.slice(Math.max(0, DATES.length - 300));
+    idx.reverse();
+  } else {
+    idx = DATES.slice(0, 300);
+  }
   const body = document.getElementById('tblBody');
   let html = '';
-  for (let i=start; i<DATES.length; i++) {
-    const d = DATES[i];
+  for (const d of idx) {
     let row = `<td>${d}</td>`;
     FUNDS.forEach(f => { const v = f.map[d]; row += `<td>${v==null?'—':(v/1e4).toFixed(2)}</td>`; });
     html += `<tr>${row}</tr>`;
   }
   body.innerHTML = html;
+}
+function toggleDateSort() {
+  dateSortDir = dateSortDir === 'desc' ? 'asc' : 'desc';
+  document.getElementById('dateSortIcon').textContent = dateSortDir === 'desc' ? '▼' : '▲';
+  buildTable();
 }
 function toggleTable() {
   const t = document.getElementById('tblBtn');
