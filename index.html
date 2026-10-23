@@ -87,7 +87,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 12:50</b></span>
+    <span>本文件生成时间: <b>2026-10-23 12:56</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -111,7 +111,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <div class="loaded">已加载 <b id="loadedCount"></b> 个数据点（2015-02-10 ~ 2026-10-22）</div>
     <div class="rowbtns" style="margin-top:6px;">
       <button class="outline" onclick="exportCSV()">⬇ 导出 CSV</button>
-      <button class="outline" onclick="toggleTable()" id="tblBtn">显示明细数据表</button>
+      <button class="outline" onclick="toggleTable()" id="tblBtn">隐藏明细数据表</button>
     </div>
 
     <div class="cards">
@@ -156,7 +156,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
         <span class="badge">共 <span id="tblCount"></span> 行</span>
         <span style="font-weight:400;color:#8a97a6;font-size:12.5px;">（点击「日期」可切换升/降序，默认显示最新 300 行，可滚动）</span>
       </div>
-      <div class="tableScroll">
+      <div class="tableScroll" id="tblWrap">
         <table><thead><tr>
           <th class="sortable" onclick="toggleDateSort()" id="dateTh">日期 <span id="dateSortIcon">▼</span></th><th>总份额(万份)</th><th>单位净值(元)</th><th>累计净值(元)</th><th>基金规模(亿元)</th><th>较前一交易日(万份)</th>
         </tr></thead><tbody id="tblBody"></tbody></table>
@@ -353,9 +353,10 @@ function toggleDateSort() {
 
 function toggleTable() {
   const t = document.getElementById('tblBtn');
-  const hidden = t.textContent.indexOf('显示') === 0;
-  if (hidden) { buildTable(); t.textContent = '隐藏明细数据表'; }
-  else { t.textContent = '显示明细数据表'; }
+  const wrap = document.getElementById('tblWrap');
+  const shown = t.textContent.indexOf('隐藏') === 0;
+  if (shown) { wrap.style.display = 'none'; t.textContent = '显示明细数据表'; }
+  else { buildTable(); wrap.style.display = 'block'; t.textContent = '隐藏明细数据表'; }
 }
 
 function exportCSV() {
@@ -376,6 +377,7 @@ function exportCSV() {
 }
 
 render();
+buildTable();  // 打开即显示明细数据表
 </script>
 </body>
 </html>
