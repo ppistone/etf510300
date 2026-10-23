@@ -87,7 +87,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 13:06</b></span>
+    <span>本文件生成时间: <b>2026-10-23 14:41</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -150,6 +150,10 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <div class="chartCard">
       <div class="ctitle"><span class="num">图2</span> 基金累计净值趋势（元）<span class="badge">日频</span></div>
       <div class="chartBox"><canvas id="chart2"></canvas></div>
+    </div>
+    <div class="chartCard">
+      <div class="ctitle"><span class="num">图3</span> 基金规模总趋势（亿）<span class="badge">日频</span></div>
+      <div class="chartBox"><canvas id="chart3"></canvas></div>
     </div>
 
     <div class="chartCard">
@@ -264,6 +268,7 @@ function drawCharts() {
   const labels = data.map(r => r.date.slice(2).replace('-', '/').replace('-', '/'));
   const shares = data.map(r => r.shares_wan);
   const acc = data.map(r => r.acc_nav);
+  const scale = data.map(r => r.shares_wan * 1e4 * r.unit_nav / 1e8);  // 基金规模，单位 亿
 
   function grad(ctx, area, rgb) {
     if (!area) return 'rgba(' + rgb + ',.18)';
@@ -291,6 +296,7 @@ function drawCharts() {
   };
   mk(document.getElementById('chart1'), shares, '214,69,54', v => fmt2(v) + ' 万份');
   mk(document.getElementById('chart2'), acc, '29,98,178', v => fmt4(v) + ' 元');
+  mk(document.getElementById('chart3'), scale, '37,150,108', v => fmt2(v) + ' 亿');
 }
 
 function queryDate() {
