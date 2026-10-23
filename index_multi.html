@@ -65,7 +65,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（各基金 2840 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 12:50</b></span>
+    <span>本文件生成时间: <b>2026-10-23 12:56</b></span>
     <span class="auto">已启用每日自动更新（每晚 23:30）</span>
   </div>
 
@@ -73,7 +73,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
 
   <div class="rowbtns">
     <button class="outline" onclick="exportCSV()">⬇ 导出合并 CSV</button>
-    <button class="outline" id="tblBtn" onclick="toggleTable()">显示明细数据表</button>
+    <button class="outline" id="tblBtn" onclick="toggleTable()">隐藏明细数据表</button>
     <a class="btn" href="index.html">↗ 返回单标的(510300)看板</a>
   </div>
 
@@ -99,7 +99,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
       <span class="badge" style="background:#e3eefc;color:#2a62b4;font-size:11.5px;border-radius:10px;padding:2px 9px;">最近 300 行</span>
       <span style="font-weight:400;color:#8a97a6;font-size:12.5px;">（点击「日期」可切换升/降序）</span>
     </div>
-    <div class="tableScroll">
+    <div class="tableScroll" id="tblWrap">
       <table><thead><tr id="tblHead"></tr></thead><tbody id="tblBody"></tbody></table>
     </div>
   </div>
@@ -242,9 +242,10 @@ function toggleDateSort() {
 }
 function toggleTable() {
   const t = document.getElementById('tblBtn');
-  const show = t.textContent.indexOf('显示') === 0;
-  if (show) { buildTable(); t.textContent = '隐藏明细数据表'; }
-  else t.textContent = '显示明细数据表';
+  const wrap = document.getElementById('tblWrap');
+  const shown = t.textContent.indexOf('隐藏') === 0;
+  if (shown) { wrap.style.display = 'none'; t.textContent = '显示明细数据表'; }
+  else { buildTable(); wrap.style.display = 'block'; t.textContent = '隐藏明细数据表'; }
 }
 function exportCSV() {
   const head = ['日期', ...FUNDS.map(f=>f.code+'_份额(万份)')];
@@ -265,7 +266,7 @@ document.querySelectorAll('.rpill').forEach(p => p.addEventListener('click', () 
 
 buildCards();
 drawCharts();
-document.getElementById('tblHead').innerHTML = '<th>日期</th>' + FUNDS.map(f=>`<th>${f.code} 份额(亿份)</th>`).join('');
+buildTable();  // 打开即显示明细数据表
 </script>
 </body>
 </html>
