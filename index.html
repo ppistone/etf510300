@@ -87,7 +87,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-10-22</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-10-23 12:56</b></span>
+    <span>本文件生成时间: <b>2026-10-23 12:59</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -158,7 +158,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
       </div>
       <div class="tableScroll" id="tblWrap">
         <table><thead><tr>
-          <th class="sortable" onclick="toggleDateSort()" id="dateTh">日期 <span id="dateSortIcon">▼</span></th><th>总份额(万份)</th><th>单位净值(元)</th><th>累计净值(元)</th><th>基金规模(亿元)</th><th>较前一交易日(万份)</th>
+          <th class="sortable" onclick="toggleDateSort()" id="dateTh">日期 <span id="dateSortIcon">▼</span></th><th>总份额(万份)</th><th>单位净值(元)</th><th>累计净值(元)</th><th>基金规模(亿元)</th><th>规模较前一交易日(亿元)</th><th>较前一交易日(万份)</th>
         </tr></thead><tbody id="tblBody"></tbody></table>
       </div>
     </div>
@@ -335,11 +335,15 @@ function buildTable() {
   let html = '';
   for (const i of idx) {
     const r = ROWS[i], prev = ROWS[Math.max(0, i - 1)];
-    const delta = i > 0 ? r.shares_wan - prev.shares_wan : 0;  // 始终取真实前一日
+    const delta = i > 0 ? r.shares_wan - prev.shares_wan : 0;  // 始终取真实前一日(份额)
     const scale = (r.shares_wan * 1e4 * r.unit_nav / 1e8);
+    const scalePrev = i > 0 ? (prev.shares_wan * 1e4 * prev.unit_nav / 1e8) : scale;
+    const dScale = i > 0 ? scale - scalePrev : 0;               // 规模较前一交易日
     const cls = delta > 0 ? 'up' : (delta < 0 ? 'down' : 'flat');
+    const clsS = dScale > 0 ? 'up' : (dScale < 0 ? 'down' : 'flat');
     html += `<tr><td>${r.date}</td><td>${fmt2(r.shares_wan)}</td><td>${fmt4(r.unit_nav)}</td>`
           + `<td>${fmt4(r.acc_nav)}</td><td>${scale.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`
+          + `<td class="${clsS}">${signed(dScale)}</td>`
           + `<td class="${cls}">${signed(delta)}</td></tr>`;
   }
   document.getElementById('tblBody').innerHTML = html;
@@ -360,13 +364,15 @@ function toggleTable() {
 }
 
 function exportCSV() {
-  const head = ['日期', '总份额(万份)', '单位净值(元)', '累计净值(元)', '基金规模(亿元)', '较前一交易日(万份)'];
+  const head = ['日期', '总份额(万份)', '单位净值(元)', '累计净值(元)', '基金规模(亿元)', '规模较前一交易日(亿元)', '较前一交易日(万份)'];
   const lines = [head.join(',')];
   for (let i = 0; i < ROWS.length; i++) {
     const r = ROWS[i], prev = ROWS[Math.max(0, i - 1)];
     const delta = i > 0 ? r.shares_wan - prev.shares_wan : 0;
-    const scale = (r.shares_wan * 1e4 * r.unit_nav / 1e8).toFixed(2);
-    lines.push([r.date, r.shares_wan, r.unit_nav, r.acc_nav, scale, delta.toFixed(2)].join(','));
+    const scale = (r.shares_wan * 1e4 * r.unit_nav / 1e8);
+    const scalePrev = i > 0 ? (prev.shares_wan * 1e4 * prev.unit_nav / 1e8) : scale;
+    const dScale = i > 0 ? scale - scalePrev : 0;
+    lines.push([r.date, r.shares_wan, r.unit_nav, r.acc_nav, scale.toFixed(2), dScale.toFixed(2), delta.toFixed(2)].join(','));
   }
   const blob = new Blob(['﻿' + lines.join('\n')], {type: 'text/csv;charset=utf-8'});
   const a = document.createElement('a');
