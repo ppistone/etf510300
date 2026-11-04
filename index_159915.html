@@ -87,7 +87,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     <span class="dot"></span>
     <span>数据截至 <b>2026-11-03</b>（共 <b id="ptCount"></b> 个数据点）</span>
     <span>｜</span>
-    <span>本文件生成时间: <b>2026-11-04 08:42</b></span>
+    <span>本文件生成时间: <b>2026-11-04 09:35</b></span>
     <span class="auto">已启用每日自动更新（开机后 &amp; 每晚 23:30）</span>
   </div>
 
@@ -148,11 +148,15 @@ th.sortable span{font-size:11px; color:#2a62b4;}
       <div class="chartBox"><canvas id="chart3"></canvas></div>
     </div>
     <div class="chartCard">
-      <div class="ctitle"><span class="num">图2</span> 基金累计净值趋势（元）<span class="badge">日频</span></div>
+      <div class="ctitle"><span class="num">图2</span> 基金规模较前一交易日增减（亿元）<span class="badge">日频</span></div>
+      <div class="chartBox"><canvas id="chart4"></canvas></div>
+    </div>
+    <div class="chartCard">
+      <div class="ctitle"><span class="num">图3</span> 基金累计净值趋势（元）<span class="badge">日频</span></div>
       <div class="chartBox"><canvas id="chart2"></canvas></div>
     </div>
     <div class="chartCard">
-      <div class="ctitle"><span class="num">图3</span> 基金总份额趋势（万份）<span class="badge">日频</span></div>
+      <div class="ctitle"><span class="num">图4</span> 基金总份额趋势（万份）<span class="badge">日频</span></div>
       <div class="chartBox"><canvas id="chart1"></canvas></div>
     </div>
 
@@ -169,7 +173,7 @@ th.sortable span{font-size:11px; color:#2a62b4;}
     </div>
 
     <p class="foot">口径说明：份额 = 基金份额总数（份），≠ 基金规模（元）；规模 ≈ 总份额 × 单位净值。份额骤增 ≈ 大额净申购，骤减 ≈ 净赎回。
-    配色：红色=总份额、蓝色=累计净值、绿色=基金规模。数据点为交易日（日频）。</p>
+    配色：红色=总份额、蓝色=累计净值、绿色=基金规模。图2（规模较前一交易日增减）柱图：红色=规模增加、绿色=规模减少（A 股习惯）。数据点为交易日（日频）。</p>
   </div>
 </div>
 
@@ -264,11 +268,18 @@ function baseOpts() {
 }
 
 function drawCharts() {
-  const data = sliceData();
+  const n = ROWS.length;
+  const start = chartRange === 'all' ? 0 : Math.max(0, n - chartRange);
+  const data = ROWS.slice(start);
   const labels = data.map(r => r.date.slice(2).replace('-', '/').replace('-', '/'));
   const shares = data.map(r => r.shares_wan);
   const acc = data.map(r => r.acc_nav);
   const scale = data.map(r => r.shares_wan * 1e4 * r.unit_nav / 1e8);  // 基金规模，单位 亿
+
+  // 规模较前一交易日（亿元），基于完整序列计算，保证切片首点也是真实差值
+  const scaleDeltaFull = ROWS.map((r, i) => i === 0 ? 0 :
+      (r.shares_wan * 1e4 * r.unit_nav / 1e8) - (ROWS[i - 1].shares_wan * 1e4 * ROWS[i - 1].unit_nav / 1e8));
+  const scaleDelta = data.map((_, i) => scaleDeltaFull[start + i]);
 
   function grad(ctx, area, rgb) {
     if (!area) return 'rgba(' + rgb + ',.18)';
@@ -297,6 +308,27 @@ function drawCharts() {
   mk(document.getElementById('chart1'), shares, '214,69,54', v => fmt2(v) + ' 万份');
   mk(document.getElementById('chart2'), acc, '29,98,178', v => fmt4(v) + ' 元');
   mk(document.getElementById('chart3'), scale, '37,150,108', v => fmt2(v) + ' 亿');
+
+  // 图2：基金规模较前一交易日增减（亿元）柱状图，正红负绿
+  const deltaColors = scaleDelta.map(v => v > 0 ? 'rgba(214,69,54,.85)' : (v < 0 ? 'rgba(30,158,87,.85)' : 'rgba(160,170,180,.6)'));
+  const cv4 = document.getElementById('chart4');
+  if (cv4.chart) {
+    cv4.chart.data.labels = labels;
+    cv4.chart.data.datasets[0].data = scaleDelta;
+    cv4.chart.data.datasets[0].backgroundColor = deltaColors;
+    cv4.chart.update('none');
+  } else {
+    cv4.chart = new Chart(cv4.getContext('2d'), {
+      type: 'bar',
+      data: {labels, datasets: [{data: scaleDelta, backgroundColor: deltaColors, borderWidth: 0, barPercentage: 1.0, categoryPercentage: 0.92}]},
+      options: (() => {
+        const o = Object.assign(baseOpts(), {});
+        o.plugins.tooltip.callbacks.label = it => (it.parsed.y > 0 ? '+' : '') +
+            it.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' 亿元';
+        return o;
+      })()
+    });
+  }
 }
 
 function queryDate() {
